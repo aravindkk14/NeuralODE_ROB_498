@@ -22,16 +22,9 @@ from panda_pushing_env import TARGET_POSE_FREE, TARGET_POSE_OBSTACLES, BOX_SIZE
 import torch
 import os
 import argparse
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
-from numpngw import write_apng
-import matplotlib_inline as IP
 from IPython.display import Image
-from IPython import display as ds
 from tqdm.notebook import tqdm
 import datetime
 import itertools
