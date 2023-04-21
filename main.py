@@ -386,7 +386,7 @@ if __name__ == "__main__":
         num_t_steps = [4,6,8]
 
         for nl, hs, om, ts in zip(num_layers,hidden_size,odeint_methods,num_t_steps):
-            pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_size=hs,method=om)
+            pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_dim=hs,method=om)
             train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
 
             pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
@@ -405,8 +405,6 @@ if __name__ == "__main__":
             direct_file(path)
             model_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_model.pt'
             torch.save(pushing_ode_model.state_dict(), os.path.join(path,model_name))
-
-
 
 
     if args.stop_controller == False:
