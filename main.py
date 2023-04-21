@@ -34,7 +34,7 @@ fil = str(current_time.date()) + " " + str(current_time.hour) + "_" + str(curren
 
 
 #--- Parse arguments
-parser = argparse.ArgumentParser('ODE/Ressidual Dynamics Model')
+parser = argparse.ArgumentParser('ODE_Residual_Dynamics_Model')
 parser.add_argument('--odeint_method', type=str, choices=['dopri5', 'dopri8'], default='dopri5')
 parser.add_argument('--load_train_eval', type=str, choices=['load', 'train', 'eval'], default='eval')
 parser.add_argument('--num_steps', type=int, default=4)
