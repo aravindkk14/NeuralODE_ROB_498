@@ -380,12 +380,12 @@ if __name__ == "__main__":
     elif args.load_train_eval == 'eval':
         collected_data = np.load('collected_data.npy', allow_pickle=True)
 
-        num_layers = [3,4,5]
+        num_layers = [3,4]
         hidden_size = [80,100,120]
         odeint_methods = ['dopri5','dopri8','euler']
         num_t_steps = [4,6,8]
 
-        for nl, hs, om, ts in zip(num_layers,hidden_size,odeint_methods,num_t_steps):
+        for hs, om, ts, nl in zip(hidden_size,odeint_methods,num_t_steps,num_layers):
             pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_dim=hs,method=om)
             train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
 
@@ -400,6 +400,12 @@ if __name__ == "__main__":
             train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
             name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'.png'
             plot_loss(train_losses, val_losses, name, True)
+
+            path = os.path.join('evals',fil,'losses')
+            direct_file(path)
+            arr = np.array([train_losses,val_losses])
+            loss_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_losses.npy'
+            np.save(os.path.join(path,loss_name),arr)            
 
             path = os.path.join('evals',fil)
             direct_file(path)
