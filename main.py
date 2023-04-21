@@ -294,7 +294,7 @@ def plot_loss(train_losses, val_losses, name = 'loss.png', eval = False):
     axes[1].set_yscale('log')
 
     if eval:
-        path = os.path.join('evals',fil)
+        path = os.path.join('evals',fil,'loss_plot')
         direct_file(path)
         plt.savefig(os.path.join(path,name))
     else:
@@ -453,7 +453,7 @@ if __name__ == "__main__":
             loss_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_losses.npy'
             np.save(os.path.join(path,loss_name),arr)            
 
-            path = os.path.join('evals',fil)
+            path = os.path.join('evals',fil,'models')
             direct_file(path)
             model_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_model.pt'
             torch.save(pushing_ode_model.state_dict(), os.path.join(path,model_name))
