@@ -48,9 +48,11 @@ class SE2PoseLoss_ODE(nn.Module):
 
 class SingleStepLoss_ODE(nn.Module):
 
-    def __init__(self, loss_fn):
+    def __init__(self, loss_fn, num_t_steps=4, method='dopri5'):
         super().__init__()
         self.loss = loss_fn
+        self.num_steps = num_t_steps
+        self.method = method
 
     def forward(self, model, state, action, target_state):
         """
@@ -60,7 +62,8 @@ class SingleStepLoss_ODE(nn.Module):
         single_step_loss = None
         # --- Your code here
         state_action = torch.cat([state,action],dim = -1)
-        next_state = odeint(model,state_action,torch.tensor([0.0,1.0,2.0])).permute(1,0,2)[:,1,:3]
+        t = torch.linspace(0,1,self.num_steps)
+        next_state = odeint(model,state_action,t,method=self.method).permute(1,0,2)[:,1,:3]
         single_step_loss = self.loss(next_state.unsqueeze(1), target_state.unsqueeze(1))
         # ---
         return single_step_loss
@@ -68,10 +71,12 @@ class SingleStepLoss_ODE(nn.Module):
 
 class MultiStepLoss_ODE(nn.Module):
 
-    def __init__(self, loss_fn, discount=0.99):
+    def __init__(self, loss_fn, discount=0.99, num_t_steps=4, method='dopri5'):
         super().__init__()
         self.loss = loss_fn
         self.discount = discount
+        self.num_steps = num_t_steps
+        self.method = method
 
     def forward(self, model, state, actions, target_states):
         """
@@ -85,9 +90,9 @@ class MultiStepLoss_ODE(nn.Module):
         for i in range(actions.shape[1]):
           state_action = torch.cat([curr_state,actions[:,i]],dim = -1)
 
-          t = torch.linspace(0,1,4)
+          t = torch.linspace(0,1,self.num_steps)
           
-          next_state = odeint(model,state_action,t)
+          next_state = odeint(model,state_action,t,method=self.method)
           next_state = next_state.permute(1,0,2)[:,:,:3]
          
           multi_step_loss_arr[i] = (self.discount**i) * self.loss(next_state[:,-1], target_states[:,i])
@@ -106,18 +111,24 @@ class ODEDynamicsModel(nn.Module):
     Observation: The network only needs to predict the state difference as a function of the state and action.
     """
 
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, action_dim,num_layers=3,hidden_dim=100, method='dopri5'):
         super(ODEDynamicsModel, self).__init__()
         self.state_dim = state_dim
         self.action_dim = action_dim
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.method = method
+        
+        self. layer_list = []
+        self.layer_list.append(nn.Linear(state_dim+action_dim, hidden_dim))
+        self.layer_list.append(nn.ReLU())
 
-        self.net = nn.Sequential(
-            nn.Linear(state_dim+action_dim, 100),
-            nn.ReLU(),
-            nn.Linear(100, 100),
-            nn.ReLU(),
-            nn.Linear(100, state_dim+action_dim)
-        )
+        for _ in range(num_layers-2):
+            self.layer_list.append(nn.Linear(hidden_dim, hidden_dim))
+            self.layer_list.append(nn.ReLU())
+        
+        self.layer_list.append(nn.Linear(hidden_dim, state_dim+action_dim))
+        self.net = nn.Sequential(*self.layer_list)
 
         # for m in self.net.modules():
         #     if isinstance(m, nn.Linear):
@@ -353,7 +364,7 @@ class PushingController_ODE(object):
         # print(self.model.type)
         state_action = torch.cat((state, action), dim=-1)
         t = torch.linspace(0, 1, 10)
-        next_state = odeint(self.model,state_action,t)[-1,:,:3]
+        next_state = odeint(self.model,state_action,t,method=self.model.method)[-1,:,:3]
         # ---
         return next_state
 
