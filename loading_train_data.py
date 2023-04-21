@@ -114,7 +114,7 @@ def process_data_multiple_step(collected_data, batch_size=500, num_steps=4):
     # --- Your code here
     dataset_d = MultiStepDynamicsDataset(collected_data,num_steps)
 
-    train_set, val_set = random_split(dataset_d,[0.8,0.2],generator=torch.Generator().manual_seed(42))
+    train_set, val_set = random_split(dataset_d,[0.8,0.2])
 
     train_loader = DataLoader(train_set, batch_size,shuffle=True)
     val_loader = DataLoader(val_set, batch_size,shuffle=True)    

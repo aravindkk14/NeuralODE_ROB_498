@@ -22,16 +22,9 @@ from panda_pushing_env import TARGET_POSE_FREE, TARGET_POSE_OBSTACLES, BOX_SIZE
 import torch
 import os
 import argparse
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
-from numpngw import write_apng
-import matplotlib_inline as IP
 from IPython.display import Image
-from IPython import display as ds
 from tqdm.notebook import tqdm
 import datetime
 import itertools
@@ -41,7 +34,7 @@ fil = str(current_time.date()) + " " + str(current_time.hour) + "_" + str(curren
 
 
 #--- Parse arguments
-parser = argparse.ArgumentParser('ODE/Ressidual Dynamics Model')
+parser = argparse.ArgumentParser('ODE_Residual_Dynamics_Model')
 parser.add_argument('--odeint_method', type=str, choices=['dopri5', 'dopri8'], default='dopri5')
 parser.add_argument('--load_train_eval', type=str, choices=['load', 'train', 'eval'], default='eval')
 parser.add_argument('--num_steps', type=int, default=4)
