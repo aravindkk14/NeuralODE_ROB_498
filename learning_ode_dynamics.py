@@ -1,9 +1,7 @@
-from collections.abc import Iterable
 import os
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torchdiffeq import odeint_adjoint as odeint

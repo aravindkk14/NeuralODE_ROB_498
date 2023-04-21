@@ -1,4 +1,4 @@
-install.sh
+#!/bin/sh
 
 pip install torch torchvision torchaudio
 pip install numpy

@@ -33,7 +33,8 @@ import matplotlib_inline as IP
 from IPython.display import Image
 from IPython import display as ds
 from tqdm.notebook import tqdm
-import datetime;
+import datetime
+import itertools
 
 current_time = datetime.datetime.now()
 fil = str(current_time.date()) + " " + str(current_time.hour) + "_" + str(current_time.minute)
@@ -213,7 +214,35 @@ def obstacle_ode(model):
     Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
 
 
-def loader_test(train_loader):
+def multiloader_test(train_loader):
+    # let's check your dataloader
+
+    # you should return a dataloader
+    print('Is the returned train_loader a DataLoader?')
+    print('Yes' if isinstance(train_loader, torch.utils.data.DataLoader) else 'No')
+    print('')
+
+    # You should have used random split to split your data - 
+    # this means the validation and training sets are both subsets of an original dataset
+    print('Was random_split used to split the data?')
+    print('Yes' if isinstance(train_loader.dataset, torch.utils.data.Subset) else 'No')
+    print('')
+
+    # The original dataset should be of a MultiStepDynamicsDataset
+    print('Is the dataset a MultiStepDynamicsDataset?')
+    print('Yes' if isinstance(train_loader.dataset.dataset, MultiStepDynamicsDataset) else 'No')
+    print('')
+
+    # we should see the state is shape (batch_size, 3)
+    # and action, next_state are shape (batch_size, num_steps, 3)
+    for item in train_loader:
+        print(f'state is shape {item["state"].shape}')
+        print(f'action is shape {item["action"].shape}')
+        print(f'next_state is shape {item["next_state"].shape}')
+        break
+
+
+def singleloader_test(train_loader):
     # let's check your dataloader
 
     # you should return a dataloader
@@ -229,7 +258,7 @@ def loader_test(train_loader):
 
     # The original dataset should be of a MultiStepDynamicsDataset
     print('Is the dataset a SingleStepDynamicsDataset?')
-    print('Yes' if isinstance(train_loader.dataset.dataset, MultiStepDynamicsDataset) else 'No')
+    print('Yes' if isinstance(train_loader.dataset.dataset, SingleStepDynamicsDataset) else 'No')
     print('')
 
     # we should see the state is shape (batch_size, 3)
@@ -239,6 +268,8 @@ def loader_test(train_loader):
         print(f'action is shape {item["action"].shape}')
         print(f'next_state is shape {item["next_state"].shape}')
         break
+
+
 
 def plot_loss(train_losses, val_losses, name = 'loss.png', eval = False):
     # plot train loss and test loss:
@@ -382,10 +413,11 @@ if __name__ == "__main__":
 
         num_layers = [3,4]
         hidden_size = [80,100,120]
-        odeint_methods = ['dopri5','dopri8','euler']
+        odeint_methods = ['euler','explicit_adams','dopri5', 'dopri8']
         num_t_steps = [4,6,8]
 
-        for hs, om, ts, nl in zip(hidden_size,odeint_methods,num_t_steps,num_layers):
+        for om, hs, ts, nl in itertools.product(odeint_methods,hidden_size,num_t_steps,num_layers):
+            print('num_layers: ',nl,'hidden_size: ',hs,'odeint_method: ',om,'num_t_steps: ',ts)
             pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_dim=hs,method=om)
             train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
 
