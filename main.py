@@ -13,6 +13,7 @@ from learning_ode_dynamics import ODEDynamicsModel
 from learning_ode_dynamics import MultiStepLoss_ODE, SingleStepLoss_ODE, SE2PoseLoss_ODE
 from learning_ode_dynamics import train_model_ode
 from learning_ode_dynamics import PushingController_ODE, free_pushing_cost_function, obstacle_avoidance_pushing_cost_function
+from learning_ode_dynamics import makedirs as direct_file
 
 
 from panda_pushing_env import TARGET_POSE_FREE, TARGET_POSE_OBSTACLES, BOX_SIZE
@@ -32,6 +33,10 @@ import matplotlib_inline as IP
 from IPython.display import Image
 from IPython import display as ds
 from tqdm.notebook import tqdm
+import datetime;
+
+current_time = datetime.datetime.now()
+fil = str(current_time.date()) + " " + str(current_time.hour) + "_" + str(current_time.minute)
 
 
 #--- Parse arguments
@@ -41,10 +46,11 @@ parser.add_argument('--load_train', type=str, choices=['load', 'train'], default
 parser.add_argument('--num_steps', type=int, default=1)
 parser.add_argument('--model', type=str, choices=['ode', 'residual'], default='ode')
 parser.add_argument('--batch_size', type=int, default=250)
-parser.add_argument('--num_epoch', type=int, default=20)
+parser.add_argument('--num_epoch', type=int, default=50)
 parser.add_argument('--learning_rate', type=float, default=1e-3)
-parser.add_argument('--save_model', action='store_true')
-parser.add_argument('--run_controller', action='store_true')
+parser.add_argument('--unsave_model', action='store_false')
+parser.add_argument('--stop_controller', action='store_true')
+
 args = parser.parse_args()
 
 def test_case1():
@@ -96,7 +102,9 @@ def no_obstacle_res(model):
     print(f'GOAL REACHED: {goal_reached}')
             
     # Create and visualize the gif file.
-    Image(filename=visualizer.get_gif('no_obstacle_res.gif'))
+    path = os.path.join('results',fil)
+    direct_file(path)
+    Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_res.gif')))
 
 def obstacle_res(model):
     visualizer = GIFVisualizer()
@@ -129,7 +137,9 @@ def obstacle_res(model):
     print(f'GOAL REACHED: {goal_reached}')
 
     # Create and visualize the gif file.
-    Image(filename=visualizer.get_gif('obstacle_res.gif'))
+    path = os.path.join('results',fil)
+    direct_file(path)
+    Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_res.gif')))
 
 
 def no_obstacle_ode(model):
@@ -162,7 +172,9 @@ def no_obstacle_ode(model):
     print(f'GOAL REACHED: {goal_reached}')
             
     # Create and visualize the gif file.
-    Image(filename=visualizer.get_gif('no_obstacle_ode.gif'))
+    path = os.path.join('results',fil)
+    direct_file(path)
+    Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
 
 def obstacle_ode(model):
     visualizer = GIFVisualizer()
@@ -195,7 +207,9 @@ def obstacle_ode(model):
     print(f'GOAL REACHED: {goal_reached}')
 
     # Create and visualize the gif file.
-    Image(filename=visualizer.get_gif('obstacle_ode.gif'))
+    path = os.path.join('results',fil)
+    direct_file(path)
+    Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
 
 
 def loader_test(train_loader):
@@ -241,8 +255,10 @@ def plot_loss(train_losses, val_losses):
     axes[1].set_ylabel('Validation Loss')
     axes[1].set_yscale('log')
 
+    path = os.path.join('results',fil)
+    direct_file(path)
+    plt.savefig(os.path.join(path,'loss.png'))
     plt.show()
-    plt.savefig('loss.png')
     
 
 if __name__ == "__main__":   
@@ -268,8 +284,10 @@ if __name__ == "__main__":
                 train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
                 plot_loss(train_losses, val_losses)
 
-                if args.save_model:
-                    torch.save(pushing_residual_dynamics_model.state_dict(), 'pushing_residual_dynamics_model.pt')
+                if args.unsave_model:
+                    path = os.path.join('models',fil)
+                    direct_file(path)
+                    torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_residual_dynamics_model.pt'))
             else:
                 #--- Train data for Multi step residual dynamics model
                 pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
@@ -285,8 +303,10 @@ if __name__ == "__main__":
                 train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
                 plot_loss(train_losses, val_losses)
 
-                if args.save_model:
-                    torch.save(pushing_residual_dynamics_model.state_dict(), 'pushing_multi_step_residual_dynamics_model.pt')
+                if args.unsave_model:
+                    path = os.path.join('models',fil)
+                    direct_file(path)
+                    torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_multi_step_residual_dynamics_model.pt'))
 
         elif args.model == 'ode':
             if args.num_steps == 1:
@@ -303,8 +323,10 @@ if __name__ == "__main__":
                 train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
                 plot_loss(train_losses, val_losses)
 
-                if args.save_model:
-                    torch.save(pushing_ode_model.state_dict(), 'pushing_single_ode_dynamics_model.pt')
+                if args.unsave_model:
+                    path = os.path.join('models',fil)
+                    direct_file(path)
+                    torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_single_ode_dynamics_model.pt'))
 
             else:
                 pushing_ode_model = ODEDynamicsModel(3,3)            
@@ -321,8 +343,10 @@ if __name__ == "__main__":
                 train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
                 plot_loss(train_losses, val_losses)
 
-                if args.save_model:
-                    torch.save(pushing_ode_model.state_dict(), 'pushing_multi_ode_dynamics_model.pt')
+                if args.unsave_model:
+                    path = os.path.join('models',fil)
+                    direct_file(path)
+                    torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_multi_ode_dynamics_model.pt'))
         
 
     elif args.load_train == 'load':
@@ -330,23 +354,23 @@ if __name__ == "__main__":
             if args.num_steps == 1:
                 #--- Load data for Single step residual dynamics model
                 pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                pushing_residual_dynamics_model.load_state_dict(torch.load('pushing_residual_dynamics_model.pt'))
+                pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_residual_dynamics_model.pt'))
             else:
                 #--- Load data for Multi step residual dynamics model
                 pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                pushing_residual_dynamics_model.load_state_dict(torch.load('pushing_multi_step_residual_dynamics_model.pt'))
+                pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_multi_step_residual_dynamics_model.pt'))
 
         elif args.model == 'ode':
             if args.num_steps == 1:
                 #--- Load data for Single step ODE dynamics model
                 pushing_ode_model = ODEDynamicsModel(3,3)
-                pushing_ode_model.load_state_dict(torch.load('pushing_single_ode_dynamics_model.pt'))
+                pushing_ode_model.load_state_dict(torch.load('models/pushing_ode_dynamics_model.pt'))
             else:
                 #--- Load data for Multi step ODE dynamics model
                 pushing_ode_model = ODEDynamicsModel(3,3)
-                pushing_ode_model.load_state_dict(torch.load('pushing_multi_ode_dynamics_model.pt'))
+                pushing_ode_model.load_state_dict(torch.load('models/pushing_multi_ode_dynamics_model.pt'))
 
-    if args.run_controller:
+    if args.stop_controller == False:
         if args.model == 'residual':
                 no_obstacle_res(pushing_residual_dynamics_model)
                 obstacle_res(pushing_residual_dynamics_model)

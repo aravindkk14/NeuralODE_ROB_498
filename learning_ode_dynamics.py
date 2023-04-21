@@ -327,8 +327,8 @@ class PushingController_ODE(object):
         state_dim = env.observation_space.shape[0]
         u_min = torch.from_numpy(env.action_space.low)
         u_max = torch.from_numpy(env.action_space.high)
-        noise_sigma = 0.5 * torch.eye(env.action_space.shape[0])
-        lambda_value = 0.01
+        noise_sigma = 0.1 * torch.eye(env.action_space.shape[0])
+        lambda_value = 0.001
         # ---
         from mppi import MPPI
         self.mppi = MPPI(self._compute_dynamics,
