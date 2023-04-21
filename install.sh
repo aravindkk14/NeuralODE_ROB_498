@@ -1,19 +1,5 @@
 #!/bin/sh
 
-pip install torch torchvision torchaudio
-pip install numpy
-pip install matplotlib
-pip install collection
-pip install torchdiffeq
-pip install tqdm
-pip install numpngw
-pip install ipython
-pip install argparse
+list = "torch torchvision torchaudio numpy matplotlib torchdiffeq tqdm numpngw ipython argparse gym==0.7.4 pybullet"
 
-pip install gym
-pip install pybullet
-pip install time
-pip install math
-pip install functools
-pip install logging
-pip install time
+pip install $list
