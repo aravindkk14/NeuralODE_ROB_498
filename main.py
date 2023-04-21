@@ -45,6 +45,7 @@ parser.add_argument('--learning_rate', type=float, default=1e-3)
 parser.add_argument('--num_t_steps', type=int, default=4)
 parser.add_argument('--unsave_model', action='store_false')
 parser.add_argument('--stop_controller', action='store_true')
+parser.add_argument('--check_eval_model', action='store_true')
 
 args = parser.parse_args()
 
@@ -67,7 +68,7 @@ def test_case1():
     # Create and visualize the gif file.
     Image(filename=visualizer.get_gif())
 
-def no_obstacle_res(model):
+def no_obstacle_res(model, eval_path = None, name = None):
     visualizer = GIFVisualizer()
 
     env = PandaPushingEnv(visualizer=visualizer, render_non_push_motions=False,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
@@ -101,7 +102,7 @@ def no_obstacle_res(model):
     direct_file(path)
     Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_res.gif')))
 
-def obstacle_res(model):
+def obstacle_res(model, eval_path = None, name = None):
     visualizer = GIFVisualizer()
 
     # set up controller and environment
@@ -137,7 +138,7 @@ def obstacle_res(model):
     Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_res.gif')))
 
 
-def no_obstacle_ode(model):
+def no_obstacle_ode(model, eval_path = None, name = None):
     visualizer = GIFVisualizer()
 
     env = PandaPushingEnv(visualizer=visualizer, render_non_push_motions=False,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
@@ -167,11 +168,17 @@ def no_obstacle_ode(model):
     print(f'GOAL REACHED: {goal_reached}')
             
     # Create and visualize the gif file.
-    path = os.path.join('results',fil)
-    direct_file(path)
-    Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
+    if args.check_eval_model:
+        # Create and visualize the gif file.
+        path = os.path.join('evals',eval_path,'robot_gif',name)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
+    else:
+        path = os.path.join('results',fil)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
 
-def obstacle_ode(model):
+def obstacle_ode(model, eval_path = None, name = None):
     visualizer = GIFVisualizer()
 
     # set up controller and environment
@@ -201,10 +208,16 @@ def obstacle_ode(model):
 
     print(f'GOAL REACHED: {goal_reached}')
 
-    # Create and visualize the gif file.
-    path = os.path.join('results',fil)
-    direct_file(path)
-    Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
+    if args.check_eval_model:
+        # Create and visualize the gif file.
+        path = os.path.join('evals',eval_path,'robot_gif',name)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
+    else:
+        # Create and visualize the gif file.
+        path = os.path.join('results',fil)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
 
 
 def multiloader_test(train_loader):
@@ -289,6 +302,13 @@ def plot_loss(train_losses, val_losses, name = 'loss.png', eval = False):
         direct_file(path)
         plt.savefig(os.path.join(path,name))
         plt.show()
+
+
+def find_latest_eval():
+    # find the latest eval folder
+    evals = os.listdir('evals')
+    dir_list = sorted(os.path.dirname(evals))
+    return dir_list[-1]
     
 
 if __name__ == "__main__":   
@@ -390,6 +410,7 @@ if __name__ == "__main__":
                 pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
                 pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_multi_step_residual_dynamics_model.pt'))
 
+
         elif args.model == 'ode':
             if args.num_steps == 1:
                 #--- Load data for Single step ODE dynamics model
@@ -438,6 +459,26 @@ if __name__ == "__main__":
             torch.save(pushing_ode_model.state_dict(), os.path.join(path,model_name))
 
 
+    if args.check_eval_model:
+        path = os.path.join('evals')
+        latest_eval = sorted(os.listdir(path))[-1]
+        path = os.path.join(path,latest_eval)
+        files = os.listdir(path)
+        for f in files:
+            if f.endswith('.pt'):
+                print(f)
+                flow = f[:-3].split('_')
+                if flow[3] != 'explicit':
+                    pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method=flow[3])
+                    pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
+                else:
+                    pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method='explicit_adams')
+                    pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
+                no_obstacle_ode(pushing_ode_model, latest_eval, f[:-3])
+                obstacle_ode(pushing_ode_model, latest_eval, f[:-3])
+
+
+
     if args.stop_controller == False:
         if args.model == 'residual':
                 no_obstacle_res(pushing_residual_dynamics_model)
@@ -447,4 +488,6 @@ if __name__ == "__main__":
                 #--- Trajectory planning for single step ODE dynamics model
                 no_obstacle_ode(pushing_ode_model)
                 obstacle_ode(pushing_ode_model)
+
+    
     
