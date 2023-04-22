@@ -65,7 +65,7 @@ def no_obstacle_res(model, name = None, args=None):
     state = state_0
 
     # num_steps_max = 100
-    num_steps_max = 20
+    num_steps_max = 25
     pbar = tqdm(range(num_steps_max))
 
     for i in pbar:
@@ -105,7 +105,7 @@ def obstacle_res(model, name = None, args=None):
     state_0 = env.reset()
     state = state_0
 
-    num_steps_max = 20
+    num_steps_max = 25
     pbar = tqdm(range(num_steps_max))
 
     for i in pbar:
@@ -145,7 +145,7 @@ def no_obstacle_ode(model, eval_path = None, name = None, args=None):
     state = state_0
 
     # num_steps_max = 100
-    num_steps_max = 20
+    num_steps_max = 25
     pbar = tqdm(range(num_steps_max))
 
     for i in pbar:
@@ -191,7 +191,7 @@ def obstacle_ode(model, eval_path = None, name = None, args=None):
     state_0 = env.reset()
     state = state_0
 
-    num_steps_max = 20
+    num_steps_max = 25
     pbar = tqdm(range(num_steps_max))
 
     for i in pbar:
@@ -312,7 +312,6 @@ def plot_loss(train_losses, val_losses, name = 'loss', eval = False, args=None):
             path = os.path.join('results',fil)
             direct_file(path)
             plt.savefig(os.path.join(path,name+'.png'))
-            plt.show()
 
 
 
@@ -357,7 +356,7 @@ def main_run(args):
         pose_loss = MultiStepLoss(pose_loss, discount=0.9)
 
         lr = args.learning_rate*2
-        num_epochs = args.num_epoch+400
+        num_epochs = args.num_epoch+600
         train_losses = None
         val_losses = None
 
@@ -415,7 +414,9 @@ def main_run(args):
             no_obstacle_ode(pushing_ode_model,name=name,args=args)
             obstacle_ode(pushing_ode_model,name=name,args=args)
 
-            plot_all_loss()
+        plot_all_loss()
+        print('Done! Check final folder for results.')
+
     else:
         if args.load_train_eval == 'train':
             #--- Collect data
