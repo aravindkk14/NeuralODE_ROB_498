@@ -28,26 +28,12 @@ from IPython.display import Image
 from tqdm.notebook import tqdm
 import datetime
 import itertools
+from mpl_toolkits.axes_grid1 import ImageGrid
 
 current_time = datetime.datetime.now()
 fil = str(current_time.date()) + " " + str(current_time.hour) + "_" + str(current_time.minute)
 
 
-#--- Parse arguments
-parser = argparse.ArgumentParser('ODE_Residual_Dynamics_Model')
-parser.add_argument('--odeint_method', type=str, choices=['dopri5', 'dopri8'], default='dopri5')
-parser.add_argument('--load_train_eval', type=str, choices=['load', 'train', 'eval'], default='eval')
-parser.add_argument('--num_steps', type=int, default=4)
-parser.add_argument('--model', type=str, choices=['ode', 'residual'], default='ode')
-parser.add_argument('--batch_size', type=int, default=250)
-parser.add_argument('--num_epoch', type=int, default=50)
-parser.add_argument('--learning_rate', type=float, default=1e-3)
-parser.add_argument('--num_t_steps', type=int, default=4)
-parser.add_argument('--unsave_model', action='store_false')
-parser.add_argument('--stop_controller', action='store_true')
-parser.add_argument('--check_eval_model', action='store_true')
-
-args = parser.parse_args()
 
 def test_case1():
     # Create the GIF visualizer
@@ -68,7 +54,7 @@ def test_case1():
     # Create and visualize the gif file.
     Image(filename=visualizer.get_gif())
 
-def no_obstacle_res(model, eval_path = None, name = None):
+def no_obstacle_res(model, name = None, args=None):
     visualizer = GIFVisualizer()
 
     env = PandaPushingEnv(visualizer=visualizer, render_non_push_motions=False,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
@@ -98,11 +84,16 @@ def no_obstacle_res(model, eval_path = None, name = None):
     print(f'GOAL REACHED: {goal_reached}')
             
     # Create and visualize the gif file.
-    path = os.path.join('results',fil)
-    direct_file(path)
-    Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_res.gif')))
+    if args.final:
+        path = os.path.join('final',name)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_res.gif')))
+    else:
+        path = os.path.join('results',fil)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_res.gif')))
 
-def obstacle_res(model, eval_path = None, name = None):
+def obstacle_res(model, name = None, args=None):
     visualizer = GIFVisualizer()
 
     # set up controller and environment
@@ -133,12 +124,17 @@ def obstacle_res(model, eval_path = None, name = None):
     print(f'GOAL REACHED: {goal_reached}')
 
     # Create and visualize the gif file.
-    path = os.path.join('results',fil)
-    direct_file(path)
-    Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_res.gif')))
+    if args.final:
+        path = os.path.join('final',name)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_res.gif')))
+    else:
+        path = os.path.join('results',fil)
+        direct_file(path)
+        Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_res.gif')))
 
 
-def no_obstacle_ode(model, eval_path = None, name = None):
+def no_obstacle_ode(model, eval_path = None, name = None, args=None):
     visualizer = GIFVisualizer()
 
     env = PandaPushingEnv(visualizer=visualizer, render_non_push_motions=False,  camera_heigh=800, camera_width=800, render_every_n_steps=5)
@@ -168,17 +164,22 @@ def no_obstacle_ode(model, eval_path = None, name = None):
     print(f'GOAL REACHED: {goal_reached}')
             
     # Create and visualize the gif file.
-    if args.check_eval_model:
-        # Create and visualize the gif file.
-        path = os.path.join('evals',eval_path,'robot_gif',name)
+    if args.final:
+        path = os.path.join('final',name)
         direct_file(path)
         Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
-    else:
-        path = os.path.join('results',fil)
-        direct_file(path)
-        Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
+    else: 
+        if args.check_eval_model:
+            # Create and visualize the gif file.
+            path = os.path.join('evals',eval_path,'robot_gif',name)
+            direct_file(path)
+            Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
+        else:
+            path = os.path.join('results',fil)
+            direct_file(path)
+            Image(filename=visualizer.get_gif(os.path.join(path,'no_obstacle_ode.gif')))
 
-def obstacle_ode(model, eval_path = None, name = None):
+def obstacle_ode(model, eval_path = None, name = None, args=None):
     visualizer = GIFVisualizer()
 
     # set up controller and environment
@@ -208,16 +209,21 @@ def obstacle_ode(model, eval_path = None, name = None):
 
     print(f'GOAL REACHED: {goal_reached}')
 
-    if args.check_eval_model:
-        # Create and visualize the gif file.
-        path = os.path.join('evals',eval_path,'robot_gif',name)
+    if args.final:
+        path = os.path.join('final',name)
         direct_file(path)
         Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
     else:
-        # Create and visualize the gif file.
-        path = os.path.join('results',fil)
-        direct_file(path)
-        Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
+        if args.check_eval_model:
+            # Create and visualize the gif file.
+            path = os.path.join('evals',eval_path,'robot_gif',name)
+            direct_file(path)
+            Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
+        else:
+            # Create and visualize the gif file.
+            path = os.path.join('results',fil)
+            direct_file(path)
+            Image(filename=visualizer.get_gif(os.path.join(path,'obstacle_ode.gif')))
 
 
 def multiloader_test(train_loader):
@@ -277,7 +283,7 @@ def singleloader_test(train_loader):
 
 
 
-def plot_loss(train_losses, val_losses, name = 'loss.png', eval = False):
+def plot_loss(train_losses, val_losses, name = 'loss', eval = False, args=None):
     # plot train loss and test loss:
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 3))
     axes[0].plot(train_losses)
@@ -293,15 +299,44 @@ def plot_loss(train_losses, val_losses, name = 'loss.png', eval = False):
     axes[1].set_ylabel('Validation Loss')
     axes[1].set_yscale('log')
 
-    if eval:
-        path = os.path.join('evals',fil,'loss_plot')
+    if args.final:
+        path = os.path.join('final',name)
         direct_file(path)
-        plt.savefig(os.path.join(path,name))
+        plt.savefig(os.path.join(path,name+'loss.png'))
     else:
-        path = os.path.join('results',fil)
-        direct_file(path)
-        plt.savefig(os.path.join(path,name))
-        plt.show()
+        if eval:
+            path = os.path.join('evals',fil,'loss_plot')
+            direct_file(path)
+            plt.savefig(os.path.join(path,name+'.png'))
+        else:
+            path = os.path.join('results',fil)
+            direct_file(path)
+            plt.savefig(os.path.join(path,name+'.png'))
+            plt.show()
+
+
+
+def plot_all_loss():
+    fig = plt.figure(figsize=(20., 20.))
+    grid = ImageGrid(fig, 111, 
+                    nrows_ncols=(2, 2),  # creates 2x2 grid of axes
+                    axes_pad=1,  # pad between axes
+                    )
+
+    img_arr = []
+    path = os.path.join('final')
+    list_images = os.listdir(path)
+    for i in list_images:
+        img = plt.imread(os.path.join(path,i,i+'loss.png'))
+        img_arr.append(img)
+
+    img_count = 0
+    for ax, im in zip(grid, img_arr):
+        ax.imshow(im)
+        ax.title.set_text(list_images[img_count]+' loss graph')
+        img_count += 1
+
+    plt.show()
 
 
 def find_latest_eval():
@@ -311,127 +346,46 @@ def find_latest_eval():
     return dir_list[-1]
     
 
-if __name__ == "__main__":   
+def main_run(args):
 
-
-    if args.load_train_eval == 'train':
-        #--- Collect data
+    if args.final:
         collected_data = np.load('collected_data.npy', allow_pickle=True)
 
-        if args.model == 'residual':
-            if args.num_steps == 1:
-                #--- Train data for Single step residual dynamics model
-                pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                train_loader, val_loader = process_data_single_step(collected_data, batch_size=args.batch_size)
-                pose_loss = SE2PoseLoss(block_width=0.1, block_length=0.1)
-                pose_loss = SingleStepLoss(pose_loss)
+        pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
+        train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size,num_steps=args.num_steps)
+        pose_loss = SE2PoseLoss(block_width=0.1, block_length=0.1)
+        pose_loss = MultiStepLoss(pose_loss, discount=0.9)
 
-                lr = args.learning_rate
-                num_epochs = args.num_epoch
-                train_losses = None
-                val_losses = None
+        lr = args.learning_rate*2
+        num_epochs = args.num_epoch+400
+        train_losses = None
+        val_losses = None
 
-                train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
-                plot_loss(train_losses, val_losses)
+        train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+        name = 'residual'
+        plot_loss(train_losses, val_losses,name=name,args=args)
 
-                if args.unsave_model:
-                    path = os.path.join('models',fil)
-                    direct_file(path)
-                    torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_residual_dynamics_model.pt'))
-            else:
-                #--- Train data for Multi step residual dynamics model
-                pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size,num_steps=args.num_steps)
-                pose_loss = SE2PoseLoss(block_width=0.1, block_length=0.1)
-                pose_loss = MultiStepLoss(pose_loss, discount=0.9)
+        path = os.path.join('final',name)
+        direct_file(path)
+        arr = np.array([train_losses,val_losses])
+        loss_name = 'residual'+'_losses.npy'
+        np.save(os.path.join(path,loss_name),arr)            
 
-                lr = args.learning_rate
-                num_epochs = args.num_epoch
-                train_losses = None
-                val_losses = None
+        path = os.path.join('final',name)
+        direct_file(path)
+        model_name = 'residual'+'_model.pt'
+        torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,model_name))
 
-                train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
-                plot_loss(train_losses, val_losses)
+        no_obstacle_res(pushing_residual_dynamics_model,name=name,args=args)
+        obstacle_res(pushing_residual_dynamics_model,name=name,args=args)
 
-                if args.unsave_model:
-                    path = os.path.join('models',fil)
-                    direct_file(path)
-                    torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_multi_step_residual_dynamics_model.pt'))
+        num_layers = [4,4,4]
+        hidden_size = [140,120,80]
+        odeint_methods = ['explicit_adams','dopri5','euler']
+        num_t_steps = [10,8,10]
 
-        elif args.model == 'ode':
-            if args.num_steps == 1:
-                pushing_ode_model = ODEDynamicsModel(3,3,method=args.odeint_method)
-                train_loader, val_loader = process_data_single_step(collected_data, batch_size=args.batch_size)
-                pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
-                pose_loss = SingleStepLoss_ODE(pose_loss,num_t_steps=args.num_t_steps,method=args.odeint_method)
-
-                lr = args.learning_rate
-                num_epochs = args.num_epoch
-                train_losses = None
-                val_losses = None
-
-                train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
-                plot_loss(train_losses, val_losses)
-
-                if args.unsave_model:
-                    path = os.path.join('models',fil)
-                    direct_file(path)
-                    torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_single_ode_dynamics_model.pt'))
-
-            else:
-                pushing_ode_model = ODEDynamicsModel(3,3,method=args.odeint_method)
-                train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
-
-                pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
-                pose_loss = MultiStepLoss_ODE(pose_loss, discount=0.9,num_t_steps=args.num_t_steps,method=args.odeint_method)
-
-                lr = args.learning_rate
-                num_epochs = args.num_epoch
-                train_losses = None
-                val_losses = None
-
-                train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
-                plot_loss(train_losses, val_losses)
-
-                if args.unsave_model:
-                    path = os.path.join('models',fil)
-                    direct_file(path)
-                    torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_multi_ode_dynamics_model.pt'))
-        
-
-    elif args.load_train_eval == 'load':
-        if args.model == 'residual':
-            if args.num_steps == 1:
-                #--- Load data for Single step residual dynamics model
-                pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_residual_dynamics_model.pt'))
-            else:
-                #--- Load data for Multi step residual dynamics model
-                pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
-                pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_multi_step_residual_dynamics_model.pt'))
-
-
-        elif args.model == 'ode':
-            if args.num_steps == 1:
-                #--- Load data for Single step ODE dynamics model
-                pushing_ode_model = ODEDynamicsModel(3,3)
-                pushing_ode_model.load_state_dict(torch.load('models/pushing_ode_dynamics_model.pt'))
-            else:
-                #--- Load data for Multi step ODE dynamics model
-                pushing_ode_model = ODEDynamicsModel(3,3)
-                pushing_ode_model.load_state_dict(torch.load('models/pushing_multi_ode_dynamics_model.pt'))
-    
-    
-    elif args.load_train_eval == 'eval':
-        collected_data = np.load('collected_data.npy', allow_pickle=True)
-
-        num_layers = [3,4]
-        hidden_size = [80,100,120]
-        odeint_methods = ['euler','explicit_adams','dopri5', 'dopri8']
-        num_t_steps = [4,6,8]
-
-        for om, hs, ts, nl in itertools.product(odeint_methods,hidden_size,num_t_steps,num_layers):
-            print('num_layers: ',nl,'hidden_size: ',hs,'odeint_method: ',om,'num_t_steps: ',ts)
+        for om, hs, ts, nl in zip(odeint_methods,hidden_size,num_t_steps,num_layers):
+            print('num_layers: ',nl,'| hidden_size: ',hs,'| odeint_method: ',om,'| num_t_steps: ',ts)
             pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_dim=hs,method=om)
             train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
 
@@ -444,50 +398,199 @@ if __name__ == "__main__":
             val_losses = None
 
             train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
-            name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'.png'
-            plot_loss(train_losses, val_losses, name, True)
+            name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)
+            plot_loss(train_losses, val_losses, name, True, args=args)
 
-            path = os.path.join('evals',fil,'losses')
+            path = os.path.join('final',name)
             direct_file(path)
             arr = np.array([train_losses,val_losses])
             loss_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_losses.npy'
             np.save(os.path.join(path,loss_name),arr)            
 
-            path = os.path.join('evals',fil,'models')
+            path = os.path.join('final',name)
             direct_file(path)
             model_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_model.pt'
             torch.save(pushing_ode_model.state_dict(), os.path.join(path,model_name))
 
+            no_obstacle_ode(pushing_ode_model,name=name,args=args)
+            obstacle_ode(pushing_ode_model,name=name,args=args)
 
-    if args.check_eval_model:
-        path = os.path.join('evals')
-        latest_eval = sorted(os.listdir(path))[-1]
-        path = os.path.join(path,latest_eval)
-        files = os.listdir(path)
-        for f in files:
-            if f.endswith('.pt'):
-                print(f)
-                flow = f[:-3].split('_')
-                if flow[3] != 'explicit':
-                    pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method=flow[3])
-                    pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
+            plot_all_loss()
+    else:
+        if args.load_train_eval == 'train':
+            #--- Collect data
+            collected_data = np.load('collected_data.npy', allow_pickle=True)
+
+            if args.model == 'residual':
+                if args.num_steps == 1:
+                    #--- Train data for Single step residual dynamics model
+                    pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
+                    train_loader, val_loader = process_data_single_step(collected_data, batch_size=args.batch_size)
+                    pose_loss = SE2PoseLoss(block_width=0.1, block_length=0.1)
+                    pose_loss = SingleStepLoss(pose_loss)
+
+                    lr = args.learning_rate
+                    num_epochs = args.num_epoch
+                    train_losses = None
+                    val_losses = None
+
+                    train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+                    plot_loss(train_losses, val_losses,args=args)
+
+                    if args.unsave_model:
+                        path = os.path.join('models',fil)
+                        direct_file(path)
+                        torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_residual_dynamics_model.pt'))
                 else:
-                    pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method='explicit_adams')
-                    pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
-                no_obstacle_ode(pushing_ode_model, latest_eval, f[:-3])
-                obstacle_ode(pushing_ode_model, latest_eval, f[:-3])
+                    #--- Train data for Multi step residual dynamics model
+                    pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
+                    train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size,num_steps=args.num_steps)
+                    pose_loss = SE2PoseLoss(block_width=0.1, block_length=0.1)
+                    pose_loss = MultiStepLoss(pose_loss, discount=0.9)
+
+                    lr = args.learning_rate
+                    num_epochs = args.num_epoch
+                    train_losses = None
+                    val_losses = None
+
+                    train_losses, val_losses = train_model(pushing_residual_dynamics_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+                    plot_loss(train_losses, val_losses,args=args)
+
+                    if args.unsave_model:
+                        path = os.path.join('models',fil)
+                        direct_file(path)
+                        torch.save(pushing_residual_dynamics_model.state_dict(), os.path.join(path,'pushing_multi_step_residual_dynamics_model.pt'))
+
+            elif args.model == 'ode':
+                if args.num_steps == 1:
+                    pushing_ode_model = ODEDynamicsModel(3,3,method=args.odeint_method)
+                    train_loader, val_loader = process_data_single_step(collected_data, batch_size=args.batch_size)
+                    pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
+                    pose_loss = SingleStepLoss_ODE(pose_loss,num_t_steps=args.num_t_steps,method=args.odeint_method)
+
+                    lr = args.learning_rate
+                    num_epochs = args.num_epoch
+                    train_losses = None
+                    val_losses = None
+
+                    train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+                    plot_loss(train_losses, val_losses,args=args)
+
+                    if args.unsave_model:
+                        path = os.path.join('models',fil)
+                        direct_file(path)
+                        torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_single_ode_dynamics_model.pt'))
+
+                else:
+                    pushing_ode_model = ODEDynamicsModel(3,3,method=args.odeint_method)
+                    train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
+
+                    pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
+                    pose_loss = MultiStepLoss_ODE(pose_loss, discount=0.9,num_t_steps=args.num_t_steps,method=args.odeint_method)
+
+                    lr = args.learning_rate
+                    num_epochs = args.num_epoch
+                    train_losses = None
+                    val_losses = None
+
+                    train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+                    plot_loss(train_losses, val_losses,args=args)
+
+                    if args.unsave_model:
+                        path = os.path.join('models',fil)
+                        direct_file(path)
+                        torch.save(pushing_ode_model.state_dict(), os.path.join(path,'pushing_multi_ode_dynamics_model.pt'))
+            
+
+        elif args.load_train_eval == 'load':
+            if args.model == 'residual':
+                if args.num_steps == 1:
+                    #--- Load data for Single step residual dynamics model
+                    pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
+                    pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_residual_dynamics_model.pt'))
+                else:
+                    #--- Load data for Multi step residual dynamics model
+                    pushing_residual_dynamics_model = ResidualDynamicsModel(3,3)
+                    pushing_residual_dynamics_model.load_state_dict(torch.load('models/pushing_multi_step_residual_dynamics_model.pt'))
+
+
+            elif args.model == 'ode':
+                if args.num_steps == 1:
+                    #--- Load data for Single step ODE dynamics model
+                    pushing_ode_model = ODEDynamicsModel(3,3)
+                    pushing_ode_model.load_state_dict(torch.load('models/pushing_ode_dynamics_model.pt'))
+                else:
+                    #--- Load data for Multi step ODE dynamics model
+                    pushing_ode_model = ODEDynamicsModel(3,3)
+                    pushing_ode_model.load_state_dict(torch.load('models/pushing_multi_ode_dynamics_model.pt'))
+        
+        
+        elif args.load_train_eval == 'eval':
+            collected_data = np.load('collected_data.npy', allow_pickle=True)
+
+            num_layers = [3,4]
+            hidden_size = [80,100,120]
+            odeint_methods = ['euler','explicit_adams','dopri5', 'dopri8']
+            num_t_steps = [4,6,8]
+
+            for om, hs, ts, nl in itertools.product(odeint_methods,hidden_size,num_t_steps,num_layers):
+                print('num_layers: ',nl,'hidden_size: ',hs,'odeint_method: ',om,'num_t_steps: ',ts)
+                pushing_ode_model = ODEDynamicsModel(3,3,num_layers=nl,hidden_dim=hs,method=om)
+                train_loader, val_loader = process_data_multiple_step(collected_data, batch_size=args.batch_size ,num_steps=args.num_steps)
+
+                pose_loss = SE2PoseLoss_ODE(block_width=0.1, block_length=0.1)
+                pose_loss = MultiStepLoss_ODE(pose_loss, discount=0.9,num_t_steps=ts,method=om)
+
+                lr = args.learning_rate
+                num_epochs = args.num_epoch
+                train_losses = None
+                val_losses = None
+
+                train_losses, val_losses = train_model_ode(pushing_ode_model,pose_loss,train_loader, val_loader, num_epochs,lr)
+                name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'.png'
+                plot_loss(train_losses, val_losses, name, True,args=args)
+
+                path = os.path.join('evals',fil,'losses')
+                direct_file(path)
+                arr = np.array([train_losses,val_losses])
+                loss_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_losses.npy'
+                np.save(os.path.join(path,loss_name),arr)            
+
+                path = os.path.join('evals',fil,'models')
+                direct_file(path)
+                model_name = 'ode_'+str(nl)+'_'+str(hs)+'_'+str(om)+'_'+str(ts)+'_model.pt'
+                torch.save(pushing_ode_model.state_dict(), os.path.join(path,model_name))
+
+
+        if args.check_eval_model:
+            path = os.path.join('evals')
+            latest_eval = sorted(os.listdir(path))[-1]
+            path = os.path.join(path,latest_eval)
+            files = os.listdir(path)
+            for f in files:
+                if f.endswith('.pt'):
+                    print(f)
+                    flow = f[:-3].split('_')
+                    if flow[3] != 'explicit':
+                        pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method=flow[3])
+                        pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
+                    else:
+                        pushing_ode_model = ODEDynamicsModel(3,3,num_layers=int(flow[1]),hidden_dim=int(flow[2]),method='explicit_adams')
+                        pushing_ode_model.load_state_dict(torch.load(os.path.join(path,f)))
+                    no_obstacle_ode(pushing_ode_model, latest_eval, f[:-3],args=args)
+                    obstacle_ode(pushing_ode_model, latest_eval, f[:-3],args=args)
 
 
 
-    if args.stop_controller == False:
-        if args.model == 'residual':
-                no_obstacle_res(pushing_residual_dynamics_model)
-                obstacle_res(pushing_residual_dynamics_model)
+        if args.stop_controller == False:
+            if args.model == 'residual':
+                    no_obstacle_res(pushing_residual_dynamics_model)
+                    obstacle_res(pushing_residual_dynamics_model)
 
-        elif args.model == 'ode':
-                #--- Trajectory planning for single step ODE dynamics model
-                no_obstacle_ode(pushing_ode_model)
-                obstacle_ode(pushing_ode_model)
+            elif args.model == 'ode':
+                    #--- Trajectory planning for single step ODE dynamics model
+                    no_obstacle_ode(pushing_ode_model,args=args)
+                    obstacle_ode(pushing_ode_model,args=args)
 
     
     
